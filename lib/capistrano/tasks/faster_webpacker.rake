@@ -1,13 +1,12 @@
 # Original source: https://coderwall.com/p/aridag
 
 
-# set the locations that we will look for changed assets to determine whether to precompile
-set :assets_dependencies, %w(app/assets lib/assets vendor/assets Gemfile.lock config/routes.rb)
-
 # clear the previous precompile task
 Rake::Task["deploy:assets:precompile"].clear_actions
 class PrecompileRequired < StandardError;
 end
+
+set :assets_prefix, 'packs'
 
 namespace :deploy do
   namespace :assets do
@@ -17,7 +16,7 @@ namespace :deploy do
         within release_path do
           with rails_env: fetch(:rails_env) do
             begin
-	      # find the most recent release
+              # find the most recent release
               latest_release = capture(:ls, '-xr', releases_path).split[1]
 
               # precompile if this is the first deploy
@@ -25,16 +24,26 @@ namespace :deploy do
 
               latest_release_path = releases_path.join(latest_release)
 
+              latest_node_modules_path = latest_release_path.join('node_modules')
+
+              execute(:test, '-e', latest_node_modules_path.to_s) rescue raise PrecompileRequired
+
+              begin
+                execute(:test, '-L', latest_node_modules_path.to_s)
+              rescue
+                execute(:cp, '-r', latest_node_modules_path, release_path)
+              end
+
               # precompile if the previous deploy failed to finish precompiling
               execute(:ls, latest_release_path.join('assets_manifest_backup')) rescue raise(PrecompileRequired)
 
               fetch(:assets_dependencies).each do |dep|
-		release = release_path.join(dep)
-		latest = latest_release_path.join(dep)
-		
-		# skip if both directories/files do not exist
-		next if [release, latest].map{|d| test "[ -e #{d} ]"}.uniq == [false]
-		
+                release = release_path.join(dep)
+                latest = latest_release_path.join(dep)
+
+                # skip if both directories/files do not exist
+                next if [release, latest].map{|d| test "[ -e #{d} ]"}.uniq == [false]
+
                 # execute raises if there is a diff
                 execute(:diff, '-Nqr', release, latest) rescue raise(PrecompileRequired)
               end
@@ -60,5 +69,19 @@ namespace :deploy do
         end
       end
     end
+  end
+end
+
+namespace :load do
+  task :defaults do
+    set :assets_dependencies, fetch(:assets_dependencies, [
+                                      'package.json',
+                                      '.babelrc',
+                                      '.postcssrc.yml',
+                                      'app/javascript',
+                                      'config/webpack',
+                                      'config/webpacker.yml',
+                                      'yarn.lock'
+                                    ])
   end
 end
