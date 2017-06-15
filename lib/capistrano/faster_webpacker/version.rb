@@ -1,5 +1,5 @@
 module Capistrano
-  module FasterAssets
+  module FasterWebpacker
     VERSION = "1.0.2"
   end
 end
