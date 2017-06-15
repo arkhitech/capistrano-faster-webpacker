@@ -48,6 +48,11 @@ namespace :deploy do
                 execute(:diff, '-Nqr', release, latest) rescue raise(PrecompileRequired)
               end
 
+              fetch(:assets_shared_dependencies).each do |dep|
+                shared_file = shared_path.join(dep)
+                execute(:test, latest_release_path, '-nt', shared_file) rescue raise(PrecompileRequired)
+              end
+
               info("Skipping asset precompile, no asset diff found")
 
               # copy over all of the assets from the last release
@@ -83,5 +88,6 @@ namespace :load do
                                       'config/webpacker.yml',
                                       'yarn.lock'
                                     ])
+    set :assets_shared_dependencies, fetch(:assets_shared_dependencies, [])
   end
 end
