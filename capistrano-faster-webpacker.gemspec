@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'capistrano/faster_webpacker/version'
 
 Gem::Specification.new do |gem|
-  gem.name          = "capistrano-faster-webpaker"
+  gem.name          = "capistrano-faster-webpacker"
   gem.version       = Capistrano::FasterWebpacker::VERSION
   gem.authors       = ['masarakki']
   gem.email         = ['masaki182@gmail.com']
