@@ -24,14 +24,15 @@ namespace :deploy do
 
               latest_release_path = releases_path.join(latest_release)
 
-              latest_node_modules_path = latest_release_path.join('node_modules')
+              latest_node_modules_path = latest_release_path.join(fetch(:node_modules_path))
 
               execute(:test, '-e', latest_node_modules_path.to_s) rescue raise PrecompileRequired
 
+              release_node_modules_path = release_path.join(fetch(:node_modules_path))
               begin
-                execute(:test, '-L', latest_node_modules_path.to_s)
+                execute(:test, '-L', release_node_modules_path.to_s)
               rescue
-                execute(:cp, '-r', latest_node_modules_path, release_path)
+                execute(:cp, '-r', latest_node_modules_path, release_node_modules_path.parent)
               end
 
               # precompile if the previous deploy failed to finish precompiling
@@ -88,6 +89,7 @@ namespace :load do
                                       'config/webpacker.yml',
                                       'yarn.lock'
                                     ])
+    set :node_modules_path, fetch(:node_modules_path, 'node_modules')
     set :assets_shared_dependencies, fetch(:assets_shared_dependencies, [])
   end
 end
