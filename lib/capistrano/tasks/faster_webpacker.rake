@@ -17,7 +17,7 @@ namespace :deploy do
           with rails_env: fetch(:rails_env) do
             begin
               # find the most recent release
-              latest_release = capture(:ls, '-xr', releases_path).split[1]
+              latest_release = File.basename(capture(:readlink, current_path))
 
               # precompile if this is the first deploy
               raise PrecompileRequired unless latest_release
